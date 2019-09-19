@@ -3,6 +3,7 @@ body {
     width: 70%;
     background-image: url("background.png");
     background-repeat: repeat;
+    background-color: black;
 }
 nav ul, footer ul {
     font-family:'Helvetica', 'Arial', 'Sans-Serif';
