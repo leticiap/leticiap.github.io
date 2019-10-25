@@ -48,6 +48,15 @@ h1 {
 	color: #983375;
 	margin-top: 15px;
 }
+
+h2 {
+  font: 12pt arial;
+  letter-spacing: 1px;
+  border-bottom: 2px solid #e98ac8;
+  border-right: 20px solid #e98ac8;
+  color: #983375;
+  margin-top: 15px;
+}
 body {
   line-height: 1.2em;
   font-family:'Tahoma', 'Helvetica', 'Arial', 'Sans-Serif';
@@ -86,6 +95,8 @@ ul.posts li {
 
 canvas {
   display: block;
-  width: 100%;
-  height: auto;
+  position: absolute;
+  top: 20%;
+  left: 25%;
+  margin: 0px;
 }

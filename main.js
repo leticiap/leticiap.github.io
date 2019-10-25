@@ -1,159 +1,175 @@
 window.onload = function() {
 	var canvas = document.getElementById("canvas"),
-		context = canvas.getContext("2d"),
-		width = canvas.width = window.innerWidth,
-		height = canvas.height = window.innerHeight;
+	context = canvas.getContext("2d"),
+	characterCanvas = document.getElementById("characterCanvas"),
+	characterContext = characterCanvas.getContext("2d"),
+	width = canvas.width = characterCanvas.width = window.innerWidth*0.5,
+	height = canvas.height = characterCanvas.height = window.innerHeight*0.6,
+	tileWidth = 60,
+	tileHeight = 30,
+	charX = 0.5,
+	charY = 9.5;
 
-	var points = [],
-		sticks = [],
-		bounce = 0.9,
-		gravity = 0.5,
-		friction = 0.999;
+	context.translate(width / 2, 50);
+	characterContext.translate(width / 2, 50);
 
-	points.push({
-		x: 100,
-		y: 100,
-		oldx: 100 + Math.random() * 30 - 15,
-		oldy: 100 + Math.random() * 30 - 15
-	});
-	points.push({
-		x: 200,
-		y: 100,
-		oldx: 200,
-		oldy: 100
-	});
-	points.push({
-		x: 200,
-		y: 200,
-		oldx: 200,
-		oldy: 200
-	});
-	points.push({
-		x: 100,
-		y: 200,
-		oldx: 100,
-		oldy: 200
-	});
+	var grid = [
+		[15, 15, 15, 14, 13, 10, 3, 2, 1, 0],
+		[15, 15, 14, 13, 10, 10, 3, 2, 1, 0],
+		[15, 14, 13, 10, 10, 3, 3, 2, 1, 0],
+		[14, 13, 10, 9, 3, 3, 2, 1, 0, 0],
+		[13, 10, 9, 7, 3, 2, 1, 0, 0, 0],
+		[10, 9, 7, 6, 3, 2, 1, 0, 0, 0],
+		[9, 7, 6, 5, 3, 2, 1, 1, 1, 1],
+		[7, 6, 5, 3, 3, 2, 2, 2, 2, 2],
+		[6, 5, 5, 3, 3, 3, 3, 3, 3, 3],
+		[5, 5, 5, 5, 5, 5, 5, 5, 5, 3]
+	];
 
-	sticks.push({
-		p0: points[0],
-		p1: points[1],
-		length: distance(points[0], points[1])
+	var img = document.createElement("img");
+	img.addEventListener("load", function() {
+		draw();
 	});
-	sticks.push({
-		p0: points[1],
-		p1: points[2],
-		length: distance(points[1], points[2])
-	});
-	sticks.push({
-		p0: points[2],
-		p1: points[3],
-		length: distance(points[2], points[3])
-	});
-	sticks.push({
-		p0: points[3],
-		p1: points[0],
-		length: distance(points[3], points[0])
-	});
-	sticks.push({
-		p0: points[0],
-		p1: points[2],
-		length: distance(points[0], points[2])
-	});
+	img.src = "tileset.png";
 
-	function distance(p0, p1) {
-		var dx = p1.x - p0.x,
-			dy = p1.y - p0.y;
-		return Math.sqrt(dx * dx + dy * dy);
+	var character = document.createElement("img");
+	character.addEventListener("load", function() {
+		drawCharacter(character, charX, charY);
+		document.body.addEventListener("keydown", moveCharacter);
+	});
+	character.src = "ball.png";
+
+	function drawCharacter(image, x, y) {
+		characterContext.clearRect(-width / 2, -50, width, height);
+		characterContext.save();
+		characterContext.translate((x - y) * tileWidth / 2, (x + y) * tileHeight / 2);
+
+		characterContext.drawImage(image, -image.width / 2, -image.height);
+
+		characterContext.restore();
 	}
 
-	update();
+	function moveCharacter(event) {
+		switch(event.keyCode) {
+			case 37: // left
+				if(canMove(charX - 1, charY)) {
+					charX--;
+					drawCharacter(character, charX, charY);
+				}
+				break;
+			case 38: // up
+				if(canMove(charX, charY - 1)) {
+					charY--;
+					drawCharacter(character, charX, charY);
+				}
+				break;
+			case 39: // right
+				if(canMove(charX + 1, charY)) {
+					charX++;
+					drawCharacter(character, charX, charY);
+				}
+				break;
+			case 40: // down
+				if(canMove(charX, charY + 1)) {
+					charY++;
+					drawCharacter(character, charX, charY);
+				}
+				break;
 
-	function update() {
-		updatePoints();
-			constrainPoints();
-		 for(var i = 0; i < 5; i++) {
-			updateSticks();
-		 }
-		renderPoints();
-		renderSticks();
-		requestAnimationFrame(update);
-	}
-
-	function updatePoints() {
-		for(var i = 0; i < points.length; i++) {
-			var p = points[i],
-				vx = (p.x - p.oldx) * friction;
-				vy = (p.y - p.oldy) * friction;
-
-			p.oldx = p.x;
-			p.oldy = p.y;
-			p.x += vx;
-			p.y += vy;
-			p.y += gravity;
 		}
 	}
 
-	function constrainPoints() {
-		for(var i = 0; i < points.length; i++) {
-			var p = points[i],
-				vx = (p.x - p.oldx) * friction;
-				vy = (p.y - p.oldy) * friction;
+	function canMove(x, y) {
+		x = Math.floor(x);
+		y = Math.floor(y);
+		if(y < 0 || y >= grid.length) {
+			return false;
+		}
+		if(x < 0 || x >= grid[y].length) {
+			return false;
+		}
+		var tile = grid[y][x];
+		if(tile < 4 || tile > 14) {
+			return false;
+		}
+		return true;
+	}
 
-			if(p.x > width) {
-				p.x = width;
-				p.oldx = p.x + vx * bounce;
-			}
-			else if(p.x < 0) {
-				p.x = 0;
-				p.oldx = p.x + vx * bounce;
-			}
-			if(p.y > height) {
-				p.y = height;
-				p.oldy = p.y + vy * bounce;
-			}
-			else if(p.y < 0) {
-				p.y = 0;
-				p.oldy = p.y + vy * bounce;
+	function draw() {
+		for(var y = 0; y < grid.length; y++) {
+			var row = grid[y];
+			for(var x = 0; x < row.length; x++) {
+				drawImageTile(x, y, row[x]);
 			}
 		}
 	}
 
-	function updateSticks() {
-		for(var i = 0; i < sticks.length; i++) {
-			var s = sticks[i],
-				dx = s.p1.x - s.p0.x,
-				dy = s.p1.y - s.p0.y,
-				distance = Math.sqrt(dx * dx + dy * dy),
-				difference = s.length - distance,
-				percent = difference / distance / 2,
-				offsetX = dx * percent,
-				offsetY = dy * percent;
+	function drawImageTile(x, y, index) {
+		context.save();
+		context.translate((x - y) * tileWidth / 2, (x + y) * tileHeight / 2 - 11 + (index < 4 ? 5 : 0));
 
-			s.p0.x -= offsetX;
-			s.p0.y -= offsetY;
-			s.p1.x += offsetX;
-			s.p1.y += offsetY;
-		}
+		context.drawImage(img, index * tileWidth, 0, tileWidth, img.height,
+			-tileWidth / 2, 0, tileWidth, img.height);
+
+		context.restore();
 	}
 
-	function renderPoints() {
-		context.clearRect(0, 0, width, height);
-		for(var i = 0; i < points.length; i++) {
-			var p = points[i];
-			context.beginPath();
-			context.arc(p.x, p.y, 5, 0, Math.PI * 2);
-			context.fill();
-		}
-	}
+	function drawBlock(x, y, z) {
+		var top = "#eeeeee",
+			right = "#cccccc",
+			left = "#999999";
 
-	function renderSticks() {
+		context.save();
+		context.translate((x - y) * tileWidth / 2, (x + y) * tileHeight / 2);
+
+		// draw top
 		context.beginPath();
-		for(var i = 0; i < sticks.length; i++) {
-			var s = sticks[i];
-			context.moveTo(s.p0.x, s.p0.y);
-			context.lineTo(s.p1.x, s.p1.y);
-		}
-		context.stroke();
+		context.moveTo(0, -z * tileHeight);
+		context.lineTo(tileWidth / 2, tileHeight / 2 - z * tileHeight);
+		context.lineTo(0, tileHeight - z * tileHeight);
+		context.lineTo(-tileWidth / 2, tileHeight / 2 - z * tileHeight);
+		context.closePath();
+		context.fillStyle = top;
+		context.fill();
+
+		// draw left
+		context.beginPath();
+		context.moveTo(-tileWidth / 2, tileHeight / 2 - z * tileHeight);
+		context.lineTo(0, tileHeight - z * tileHeight);
+		context.lineTo(0, tileHeight);
+		context.lineTo(-tileWidth / 2, tileHeight / 2);
+		context.closePath();
+		context.fillStyle = left;
+		context.fill();
+
+		// // draw right
+		context.beginPath();
+		context.moveTo(tileWidth / 2, tileHeight / 2 - z * tileHeight);
+		context.lineTo(0, tileHeight - z * tileHeight);
+		context.lineTo(0, tileHeight);
+		context.lineTo(tileWidth / 2, tileHeight / 2);
+		context.closePath();
+		context.fillStyle = right;
+		context.fill();
+
+
+		context.restore();
 	}
-};
+
+
+	function drawTile(x, y, color) {
+		context.save();
+		context.translate((x - y) * tileWidth / 2, (x + y) * tileHeight / 2);
+
+		context.beginPath();
+		context.moveTo(0, 0);
+		context.lineTo(tileWidth / 2, tileHeight / 2);
+		context.lineTo(0, tileHeight);
+		context.lineTo(-tileWidth / 2, tileHeight / 2);
+		context.closePath();
+		context.fillStyle = color;
+		context.fill();
+
+		context.restore();
+	}
+}
